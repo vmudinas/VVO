@@ -6,18 +6,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPieceContext = nextPieceCanvas.getContext('2d');
     
     // Game constants
-    const BLOCK_SIZE = 20;
-    const BOARD_WIDTH = 12;
+    const BLOCK_SIZE = 15; // Reduced from 20
+    const BOARD_WIDTH = 24; // Doubled from 12
     const BOARD_HEIGHT = 20;
     const COLORS = [
         null,
-        '#FF0D72', // I
-        '#0DC2FF', // J
-        '#0DFF72', // L
-        '#F538FF', // O
-        '#FF8E0D', // S
-        '#FFE138', // T
-        '#3877FF'  // Z
+        '#FF3366', // I - Vibrant pink
+        '#33CCFF', // J - Bright blue
+        '#66FF99', // L - Light green
+        '#CC33FF', // O - Purple
+        '#FF9933', // S - Orange
+        '#FFFF33', // T - Yellow
+        '#3366FF', // Z - Royal blue
+        '#FFFFFF'  // Flash effect
     ];
     
     // Scale the canvas for better rendering
@@ -114,10 +115,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function drawBlock(x, y, color, ctx = context) {
+        // Base block shape
         ctx.fillStyle = color;
         ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = '#800080';
-        ctx.strokeRect(x, y, 1, 1);
+        
+        // Add AI-like generated texture effects
+        const blockSize = ctx === context ? 1 : 0.5;
+        
+        // Add gradient effect
+        const gradient = ctx.createLinearGradient(x, y, x + blockSize, y + blockSize);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(0.7, adjustBrightness(color, 1.2)); // Lighter
+        gradient.addColorStop(1, adjustBrightness(color, 0.8)); // Darker
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x + 0.05, y + 0.05, blockSize - 0.1, blockSize - 0.1);
+        
+        // Add highlight
+        ctx.fillStyle = adjustBrightness(color, 1.5);
+        ctx.beginPath();
+        ctx.moveTo(x + 0.1, y + 0.1);
+        ctx.lineTo(x + 0.3, y + 0.1);
+        ctx.lineTo(x + 0.1, y + 0.3);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw border
+        ctx.strokeStyle = adjustBrightness(color, 0.6);
+        ctx.lineWidth = 0.05;
+        ctx.strokeRect(x, y, blockSize, blockSize);
+    }
+    
+    // Helper function to adjust brightness of a color
+    function adjustBrightness(hex, factor) {
+        if (hex === '#FFFFFF') return hex; // Don't adjust flash effect color
+        
+        // Convert hex to RGB
+        let r = parseInt(hex.substr(1, 2), 16);
+        let g = parseInt(hex.substr(3, 2), 16);
+        let b = parseInt(hex.substr(5, 2), 16);
+        
+        // Adjust brightness
+        r = Math.min(255, Math.round(r * factor));
+        g = Math.min(255, Math.round(g * factor));
+        b = Math.min(255, Math.round(b * factor));
+        
+        // Convert back to hex
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
     
     function drawBoard() {
@@ -146,7 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function drawNextPiece() {
+        // Clear the next piece canvas
         nextPieceContext.clearRect(0, 0, nextPieceCanvas.width / (BLOCK_SIZE / 2), nextPieceCanvas.height / (BLOCK_SIZE / 2));
+        
+        // Draw a background for next piece area
+        nextPieceContext.fillStyle = '#f0f0f0';
+        nextPieceContext.fillRect(0, 0, nextPieceCanvas.width / (BLOCK_SIZE / 2), nextPieceCanvas.height / (BLOCK_SIZE / 2));
         
         const offsetX = (5 - player.nextPiece[0].length) / 2;
         const offsetY = (5 - player.nextPiece.length) / 2;
@@ -155,9 +204,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function draw() {
+        // Clear the canvas
         context.clearRect(0, 0, canvas.width / BLOCK_SIZE, canvas.height / BLOCK_SIZE);
+        
+        // Draw a subtle grid pattern for the background
+        context.fillStyle = '#f8f8f8';
+        context.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+        
+        // Draw grid lines
+        context.strokeStyle = '#e0e0e0';
+        context.lineWidth = 0.02;
+        
+        // Vertical grid lines
+        for (let x = 0; x <= BOARD_WIDTH; x++) {
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, BOARD_HEIGHT);
+            context.stroke();
+        }
+        
+        // Horizontal grid lines
+        for (let y = 0; y <= BOARD_HEIGHT; y++) {
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(BOARD_WIDTH, y);
+            context.stroke();
+        }
+        
+        // Draw the board
         drawBoard();
+        
+        // Draw the active piece
         drawPiece(player.piece, player.pos);
+        
+        // Draw the next piece preview
         drawNextPiece();
     }
     
@@ -243,7 +323,9 @@ document.addEventListener('DOMContentLoaded', () => {
             player.pos.y--;
             merge();
             clearLines();
-            resetPlayer();
+            setTimeout(() => {
+                resetPlayer();
+            }, 150); // Slight delay after line clearing
         }
         dropCounter = 0;
     }
@@ -269,7 +351,9 @@ document.addEventListener('DOMContentLoaded', () => {
         player.pos.y--;
         merge();
         clearLines();
-        resetPlayer();
+        setTimeout(() => {
+            resetPlayer();
+        }, 150); // Slight delay after line clearing
         dropCounter = 0;
     }
     
@@ -293,24 +377,45 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function clearLines() {
         let clearedLines = 0;
+        let linesToClear = [];
         
+        // Find lines to clear
         outer: for (let y = board.length - 1; y >= 0; y--) {
             for (let x = 0; x < board[y].length; x++) {
                 if (board[y][x] === 0) {
                     continue outer;
                 }
             }
-            
-            // Clear the line
-            const row = board.splice(y, 1)[0].fill(0);
-            board.unshift(row);
-            y++;
-            clearedLines++;
+            linesToClear.push(y);
         }
         
-        if (clearedLines > 0) {
-            // Update score and level
-            updateScore(clearedLines);
+        // If we have lines to clear, add a flash effect
+        if (linesToClear.length > 0) {
+            // Flash the lines
+            const flashLines = () => {
+                linesToClear.forEach(y => {
+                    for (let x = 0; x < board[y].length; x++) {
+                        board[y][x] = 8; // Special color code for flashing
+                    }
+                });
+                draw();
+                
+                // Clear the lines after the flash effect
+                setTimeout(() => {
+                    // Clear the lines (from bottom to top to avoid index issues)
+                    linesToClear.sort((a, b) => b - a).forEach(y => {
+                        const row = board.splice(y, 1)[0].fill(0);
+                        board.unshift(row);
+                        clearedLines++;
+                    });
+                    
+                    // Update score
+                    updateScore(clearedLines);
+                    draw();
+                }, 100);
+            };
+            
+            flashLines();
         }
     }
     
@@ -338,15 +443,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         switch(event.keyCode) {
             case 37: // Left arrow
+            case 65: // A key
                 moveLeft();
                 break;
             case 39: // Right arrow
+            case 68: // D key
                 moveRight();
                 break;
             case 40: // Down arrow
+            case 83: // S key
                 moveDown();
                 break;
             case 38: // Up arrow
+            case 87: // W key
                 rotatePlayer(1);
                 break;
             case 32: // Spacebar
@@ -415,8 +524,8 @@ document.addEventListener('DOMContentLoaded', () => {
         context.fillStyle = 'rgba(0, 0, 0, 0.75)';
         context.fillRect(0, 7, BOARD_WIDTH, 6);
         
-        context.font = '1px Arial';
-        context.fillStyle = 'white';
+        context.font = '2px Arial';
+        context.fillStyle = 'red';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText('GAME OVER', BOARD_WIDTH / 2, 10);
