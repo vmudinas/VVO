@@ -17,7 +17,8 @@ document.addEventListener('DOMContentLoaded', () => {
         '#F538FF', // O
         '#FF8E0D', // S
         '#FFE138', // T
-        '#3877FF'  // Z
+        '#3877FF', // Z
+        '#FFFFFF'  // Flash effect
     ];
     
     // Scale the canvas for better rendering
@@ -243,7 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
             player.pos.y--;
             merge();
             clearLines();
-            resetPlayer();
+            setTimeout(() => {
+                resetPlayer();
+            }, 150); // Slight delay after line clearing
         }
         dropCounter = 0;
     }
@@ -269,7 +272,9 @@ document.addEventListener('DOMContentLoaded', () => {
         player.pos.y--;
         merge();
         clearLines();
-        resetPlayer();
+        setTimeout(() => {
+            resetPlayer();
+        }, 150); // Slight delay after line clearing
         dropCounter = 0;
     }
     
@@ -293,24 +298,45 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function clearLines() {
         let clearedLines = 0;
+        let linesToClear = [];
         
+        // Find lines to clear
         outer: for (let y = board.length - 1; y >= 0; y--) {
             for (let x = 0; x < board[y].length; x++) {
                 if (board[y][x] === 0) {
                     continue outer;
                 }
             }
-            
-            // Clear the line
-            const row = board.splice(y, 1)[0].fill(0);
-            board.unshift(row);
-            y++;
-            clearedLines++;
+            linesToClear.push(y);
         }
         
-        if (clearedLines > 0) {
-            // Update score and level
-            updateScore(clearedLines);
+        // If we have lines to clear, add a flash effect
+        if (linesToClear.length > 0) {
+            // Flash the lines
+            const flashLines = () => {
+                linesToClear.forEach(y => {
+                    for (let x = 0; x < board[y].length; x++) {
+                        board[y][x] = 8; // Special color code for flashing
+                    }
+                });
+                draw();
+                
+                // Clear the lines after the flash effect
+                setTimeout(() => {
+                    // Clear the lines (from bottom to top to avoid index issues)
+                    linesToClear.sort((a, b) => b - a).forEach(y => {
+                        const row = board.splice(y, 1)[0].fill(0);
+                        board.unshift(row);
+                        clearedLines++;
+                    });
+                    
+                    // Update score
+                    updateScore(clearedLines);
+                    draw();
+                }, 100);
+            };
+            
+            flashLines();
         }
     }
     
@@ -419,8 +445,8 @@ document.addEventListener('DOMContentLoaded', () => {
         context.fillStyle = 'rgba(0, 0, 0, 0.75)';
         context.fillRect(0, 7, BOARD_WIDTH, 6);
         
-        context.font = '1px Arial';
-        context.fillStyle = 'white';
+        context.font = '2px Arial';
+        context.fillStyle = 'red';
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText('GAME OVER', BOARD_WIDTH / 2, 10);
