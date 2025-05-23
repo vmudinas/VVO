@@ -338,15 +338,19 @@ document.addEventListener('DOMContentLoaded', () => {
         
         switch(event.keyCode) {
             case 37: // Left arrow
+            case 65: // A key
                 moveLeft();
                 break;
             case 39: // Right arrow
+            case 68: // D key
                 moveRight();
                 break;
             case 40: // Down arrow
+            case 83: // S key
                 moveDown();
                 break;
             case 38: // Up arrow
+            case 87: // W key
                 rotatePlayer(1);
                 break;
             case 32: // Spacebar
