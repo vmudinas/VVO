@@ -51,7 +51,7 @@ h1 {
 }
 
 canvas {
-    border: 1px solid #333;
+    border: 1px solid #800080;
     background-color: #f8f8f8;
 }
 
@@ -90,6 +90,32 @@ button:hover {
 .instructions p {
     margin: 5px 0;
     font-size: 14px;
+}
+
+.top-scores {
+    margin-top: 20px;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-bottom: 20px;
+}
+
+.top-scores h2 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.score-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 10px;
+    background-color: #f0f0f0;
+    margin-bottom: 5px;
+    border-radius: 4px;
+}
+
+.score-item:nth-child(odd) {
+    background-color: #e0e0e0;
 }
 
 /* Media query for smaller screens */

@@ -94,6 +94,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const levelElement = document.getElementById('level');
     const startButton = document.getElementById('start-button');
     const resetButton = document.getElementById('reset-button');
+    const scoresListElement = document.getElementById('scores-list');
+    
+    // Load and display top scores
+    displayTopScores();
     
     // Event listeners
     document.addEventListener('keydown', handleKeyPress);
@@ -112,7 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function drawBlock(x, y, color, ctx = context) {
         ctx.fillStyle = color;
         ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = '#000';
+        ctx.strokeStyle = '#800080';
         ctx.strokeRect(x, y, 1, 1);
     }
     
@@ -401,6 +405,12 @@ document.addEventListener('DOMContentLoaded', () => {
         isPaused = true;
         cancelAnimationFrame(animationId);
         
+        // Save the score
+        saveScore(score);
+        
+        // Update top scores display
+        displayTopScores();
+        
         // Draw game over message
         context.fillStyle = 'rgba(0, 0, 0, 0.75)';
         context.fillRect(0, 7, BOARD_WIDTH, 6);
@@ -410,6 +420,56 @@ document.addEventListener('DOMContentLoaded', () => {
         context.textAlign = 'center';
         context.textBaseline = 'middle';
         context.fillText('GAME OVER', BOARD_WIDTH / 2, 10);
+    }
+    
+    // Score management functions
+    function saveScore(score) {
+        // Skip if score is 0
+        if (score === 0) return;
+        
+        // Get existing scores
+        const scores = getTopScores();
+        
+        // Add new score with timestamp
+        const newScore = {
+            score: score,
+            date: new Date().toLocaleDateString()
+        };
+        
+        scores.push(newScore);
+        
+        // Sort scores descending and take top 5
+        const topScores = scores
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 5);
+        
+        // Save to localStorage
+        localStorage.setItem('tetrisTopScores', JSON.stringify(topScores));
+    }
+    
+    function getTopScores() {
+        const storedScores = localStorage.getItem('tetrisTopScores');
+        return storedScores ? JSON.parse(storedScores) : [];
+    }
+    
+    function displayTopScores() {
+        const scores = getTopScores();
+        
+        if (scores.length === 0) {
+            scoresListElement.innerHTML = '<p>No scores yet</p>';
+            return;
+        }
+        
+        // Create HTML for scores
+        const scoreHTML = scores.map((item, index) => {
+            return `<div class="score-item">
+                <span>#${index + 1}</span>
+                <span>${item.score} points</span>
+                <span>${item.date}</span>
+            </div>`;
+        }).join('');
+        
+        scoresListElement.innerHTML = scoreHTML;
     }
     
     // Initial draw
