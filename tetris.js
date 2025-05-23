@@ -11,13 +11,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const BOARD_HEIGHT = 20;
     const COLORS = [
         null,
-        '#FF0D72', // I
-        '#0DC2FF', // J
-        '#0DFF72', // L
-        '#F538FF', // O
-        '#FF8E0D', // S
-        '#FFE138', // T
-        '#3877FF', // Z
+        '#FF3366', // I - Vibrant pink
+        '#33CCFF', // J - Bright blue
+        '#66FF99', // L - Light green
+        '#CC33FF', // O - Purple
+        '#FF9933', // S - Orange
+        '#FFFF33', // T - Yellow
+        '#3366FF', // Z - Royal blue
         '#FFFFFF'  // Flash effect
     ];
     
@@ -115,10 +115,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function drawBlock(x, y, color, ctx = context) {
+        // Base block shape
         ctx.fillStyle = color;
         ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = '#800080';
-        ctx.strokeRect(x, y, 1, 1);
+        
+        // Add AI-like generated texture effects
+        const blockSize = ctx === context ? 1 : 0.5;
+        
+        // Add gradient effect
+        const gradient = ctx.createLinearGradient(x, y, x + blockSize, y + blockSize);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(0.7, adjustBrightness(color, 1.2)); // Lighter
+        gradient.addColorStop(1, adjustBrightness(color, 0.8)); // Darker
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x + 0.05, y + 0.05, blockSize - 0.1, blockSize - 0.1);
+        
+        // Add highlight
+        ctx.fillStyle = adjustBrightness(color, 1.5);
+        ctx.beginPath();
+        ctx.moveTo(x + 0.1, y + 0.1);
+        ctx.lineTo(x + 0.3, y + 0.1);
+        ctx.lineTo(x + 0.1, y + 0.3);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw border
+        ctx.strokeStyle = adjustBrightness(color, 0.6);
+        ctx.lineWidth = 0.05;
+        ctx.strokeRect(x, y, blockSize, blockSize);
+    }
+    
+    // Helper function to adjust brightness of a color
+    function adjustBrightness(hex, factor) {
+        if (hex === '#FFFFFF') return hex; // Don't adjust flash effect color
+        
+        // Convert hex to RGB
+        let r = parseInt(hex.substr(1, 2), 16);
+        let g = parseInt(hex.substr(3, 2), 16);
+        let b = parseInt(hex.substr(5, 2), 16);
+        
+        // Adjust brightness
+        r = Math.min(255, Math.round(r * factor));
+        g = Math.min(255, Math.round(g * factor));
+        b = Math.min(255, Math.round(b * factor));
+        
+        // Convert back to hex
+        return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
     }
     
     function drawBoard() {
@@ -147,7 +190,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function drawNextPiece() {
+        // Clear the next piece canvas
         nextPieceContext.clearRect(0, 0, nextPieceCanvas.width / (BLOCK_SIZE / 2), nextPieceCanvas.height / (BLOCK_SIZE / 2));
+        
+        // Draw a background for next piece area
+        nextPieceContext.fillStyle = '#f0f0f0';
+        nextPieceContext.fillRect(0, 0, nextPieceCanvas.width / (BLOCK_SIZE / 2), nextPieceCanvas.height / (BLOCK_SIZE / 2));
         
         const offsetX = (5 - player.nextPiece[0].length) / 2;
         const offsetY = (5 - player.nextPiece.length) / 2;
@@ -156,9 +204,40 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function draw() {
+        // Clear the canvas
         context.clearRect(0, 0, canvas.width / BLOCK_SIZE, canvas.height / BLOCK_SIZE);
+        
+        // Draw a subtle grid pattern for the background
+        context.fillStyle = '#f8f8f8';
+        context.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+        
+        // Draw grid lines
+        context.strokeStyle = '#e0e0e0';
+        context.lineWidth = 0.02;
+        
+        // Vertical grid lines
+        for (let x = 0; x <= BOARD_WIDTH; x++) {
+            context.beginPath();
+            context.moveTo(x, 0);
+            context.lineTo(x, BOARD_HEIGHT);
+            context.stroke();
+        }
+        
+        // Horizontal grid lines
+        for (let y = 0; y <= BOARD_HEIGHT; y++) {
+            context.beginPath();
+            context.moveTo(0, y);
+            context.lineTo(BOARD_WIDTH, y);
+            context.stroke();
+        }
+        
+        // Draw the board
         drawBoard();
+        
+        // Draw the active piece
         drawPiece(player.piece, player.pos);
+        
+        // Draw the next piece preview
         drawNextPiece();
     }
     
