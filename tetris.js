@@ -6,8 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const nextPieceContext = nextPieceCanvas.getContext('2d');
     
     // Game constants
-    const BLOCK_SIZE = 20;
-    const BOARD_WIDTH = 12;
+    const BLOCK_SIZE = 15; // Reduced from 20
+    const BOARD_WIDTH = 24; // Doubled from 12
     const BOARD_HEIGHT = 20;
     const COLORS = [
         null,
